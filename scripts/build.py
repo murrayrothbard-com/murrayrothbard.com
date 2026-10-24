@@ -48,17 +48,21 @@ _SECT = {"mises-daily": "Mises Daily", "mises-wire": "Mises Wire", "free-market"
 if _art.exists():
     _norm = lambda t: re.sub(r"[^a-z0-9]+", " ", re.sub(r"^(the|a|an)\s+", "", t.lower())).strip()
     _by = {_norm(w["title"]): w for w in WORKS}
+    _lf = ROOT / "data" / "mises_article_licenses.json"
+    _LIC = json.loads(_lf.read_text()) if _lf.exists() else {}
+    _LT = {"nd": "CC BY-NC-ND 4.0 (Mises Institute)", "r": "All rights reserved (Mises Institute)"}
     for _path, _title, _date in json.loads(_art.read_text()):
         _url = "https://mises.org" + _path
         _m = _by.get(_norm(_title))
         if _m and not _m.get("source_url"):
             _m["source_url"] = _url
+            _m["license"] = _LT.get(_LIC.get(_path), _m.get("license", "Check at source"))
             continue
         if _m:
             continue
         _sect = _path.split("/")[1]
         _rec = {"slug": slugify(_title)[:80] + "-" + _date[-4:], "title": _title, "year": None, "type": "Article",
-                "publication": _SECT.get(_sect, ""), "license": "Check at source", "hosting": "link",
+                "publication": _SECT.get(_sect, ""), "license": _LT.get(_LIC.get(_path), "Check at source"), "hosting": "link",
                 "source_url": _url, "source_name": "Mises Institute",
                 "description": "Posted on Mises.org " + _date + "."}
         WORKS.append(_rec); _by[_norm(_title)] = _rec
