@@ -56,14 +56,15 @@ if _art.exists():
         _m = _by.get(_norm(_title))
         if _m and not _m.get("source_url"):
             _m["source_url"] = _url
+            _m["_path"] = _path
             _m["license"] = _LT.get(_LIC.get(_path), _m.get("license", "Check at source"))
             continue
-        if _m:
+        if _m and _m.get("source_url") == _url:
             continue
         _sect = _path.split("/")[1]
-        _rec = {"slug": slugify(_title)[:80] + "-" + _date[-4:], "title": _title, "year": None, "type": "Article",
+        _rec = {"slug": slugify(_title)[:70] + "-" + _date[-4:] + ("-" + slugify(_path)[-12:] if _m else ""), "title": _title, "year": None, "type": "Article",
                 "publication": _SECT.get(_sect, ""), "license": _LT.get(_LIC.get(_path), "Check at source"), "hosting": "link",
-                "source_url": _url, "source_name": "Mises Institute",
+                "source_url": _url, "source_name": "Mises Institute", "_path": _path,
                 "description": "Posted on Mises.org " + _date + "."}
         WORKS.append(_rec); _by[_norm(_title)] = _rec
 # LewRockwell.com archive + Libertarian Forum (link-only)
@@ -90,6 +91,16 @@ for _t, _u, _y in [
                   "license": "All rights reserved (Mises Institute)", "hosting": "link", "source_url": _u,
                   "source_name": "Mises Institute",
                   "description": "Rothbard's newsletter, which he edited from 1969 to 1984."})
+# Hosted full texts (license-verified): CC BY-NC-ND 4.0 Mises articles, reproduced unaltered
+import base64, gzip, glob
+_parts = sorted(glob.glob(str(ROOT / "data" / "texts" / "mises-articles.b64.*")))
+_TEXTS = json.loads(gzip.decompress(base64.b64decode("".join(open(f).read().strip() for f in _parts)))) if _parts else {}
+for _w in WORKS:
+    if _w.get("_path") in _TEXTS and _LIC.get(_w["_path"]) == "nd":
+        _w["hosting"] = "full"
+        _w["license"] = "CC BY-NC-ND 4.0 (Mises Institute)"
+        _w["_html"] = _TEXTS[_w["_path"]]
+        _w["_lic_url"] = "https://creativecommons.org/licenses/by-nc-nd/4.0/"
 TOPICS = json.loads((ROOT / "data" / "topics.json").read_text())
 WORKS.sort(key=lambda w: (w.get("year") or 9999, w["title"].lower()))
 
@@ -143,6 +154,7 @@ article h1{font-size:clamp(34px,6vw,56px)}
 .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:32px 0}
 .fact{background:var(--bg2);border-radius:20px;padding:18px 20px}
 .fact b{display:block;font-size:13px;color:var(--mute);font-weight:500;margin-bottom:4px}
+.reading{max-width:680px}.attrib{font-size:14px;color:var(--mute);border-top:1px solid var(--line);padding-top:14px;margin-top:32px}
 .btn{display:inline-block;background:var(--acc);color:var(--accink);padding:14px 26px;border-radius:999px;text-decoration:none;font-weight:600}
 .btn:focus{outline:3px solid var(--ink);outline-offset:2px}
 .prose{font-family:"Iowan Old Style","Charter",Georgia,serif;font-size:20px;line-height:1.7}
@@ -279,6 +291,14 @@ def main():
     write("browse/index.html", page("Browse | Murray Rothbard", "Browse Murray Rothbard's writings by topic, year, type and publication.", browse, "/browse/", "browse"))
 
     # ---- work pages
+    def reading(w, url):
+        if not w.get("_html"):
+            return ""
+        return (f'<hr><div class="prose reading">{w["_html"]}</div>'
+                f'<p class="attrib"><b>Attribution.</b> &ldquo;{esc(w["title"])}&rdquo; by Murray N. Rothbard, originally published by the '
+                f'<a href="{esc(url)}" rel="noopener">{esc(w.get("source_name") or "Mises Institute")}</a>. '
+                f'Reproduced unaltered and non-commercially under the <a href="{esc(w["_lic_url"])}" rel="license noopener">{esc(w["license"])}</a> license.</p>')
+
     for w in WORKS:
         url, label = source_link(w)
         desc = w.get("description") or f"{w['title']} by Murray N. Rothbard."
@@ -299,7 +319,7 @@ def main():
 <div class="fact"><b>Type</b><a href="/browse/type/{w['_type']}/">{esc(w['type'])}</a></div>{pub}
 <div class="fact"><b>License</b>{esc(w.get('license', 'Check at source'))}</div>
 <div class="fact"><b>On this site</b>{'Full text' if w.get('hosting') == 'full' else 'Link to source'}</div></div>
-<p><a class="btn" href="{esc(url)}" rel="noopener">{esc(label)}</a></p></article>"""
+<p><a class="btn" href="{esc(url)}" rel="noopener">{esc(label)}</a></p>{reading(w, url)}</article>"""
         write(f"works/{w['slug']}/index.html",
               page(f"{w['title']} | Murray Rothbard", desc, body, f"/works/{w['slug']}/"))
 
