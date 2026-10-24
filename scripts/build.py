@@ -38,6 +38,30 @@ if _imp.exists():
         if _r["type"] == "Other" and _r["publication"]:
             _r["type"] = "Article"  # periodical pieces: columns, essays, op-eds
         WORKS.append(_r)
+# Mises.org articles: link-only records; attach source URLs to matching bibliography entries
+_art = ROOT / "data" / "mises_articles.json"
+_SECT = {"mises-daily": "Mises Daily", "mises-wire": "Mises Wire", "free-market": "The Free Market",
+         "articles-interest": "Mises Institute articles", "left-and-right": "Left and Right",
+         "power-market": "Power and Market", "journal-libertarian-studies": "Journal of Libertarian Studies",
+         "review-austrian-economics": "Review of Austrian Economics",
+         "quarterly-journal-austrian-economics": "Quarterly Journal of Austrian Economics"}
+if _art.exists():
+    _norm = lambda t: re.sub(r"[^a-z0-9]+", " ", re.sub(r"^(the|a|an)\s+", "", t.lower())).strip()
+    _by = {_norm(w["title"]): w for w in WORKS}
+    for _path, _title, _date in json.loads(_art.read_text()):
+        _url = "https://mises.org" + _path
+        _m = _by.get(_norm(_title))
+        if _m and not _m.get("source_url"):
+            _m["source_url"] = _url
+            continue
+        if _m:
+            continue
+        _sect = _path.split("/")[1]
+        _rec = {"slug": slugify(_title)[:80] + "-" + _date[-4:], "title": _title, "year": None, "type": "Article",
+                "publication": _SECT.get(_sect, ""), "license": "Check at source", "hosting": "link",
+                "source_url": _url, "source_name": "Mises Institute",
+                "description": "Posted on Mises.org " + _date + "."}
+        WORKS.append(_rec); _by[_norm(_title)] = _rec
 TOPICS = json.loads((ROOT / "data" / "topics.json").read_text())
 WORKS.sort(key=lambda w: (w.get("year") or 9999, w["title"].lower()))
 
