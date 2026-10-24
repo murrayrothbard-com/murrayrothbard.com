@@ -41,7 +41,7 @@ for slug, path in books.items():
         raw_front = " ".join(z.read(n).decode("utf8", "ignore") for n in names[:6])
         lic = OVERRIDE.get(slug) or detect(raw_front + " " + front)
         report[slug] = {"license": lic, "bytes": len(data), "sections": len(parts)}
-        if lic.startswith("CC BY "):
+        if lic.startswith("CC BY"):
             chapters = [{"title": (re.search(r"[^\n]+", t.strip()) or [""])[0][:120] if t.strip() else "", "text": t.strip()} for _, t in parts if len(t.strip()) > 200]
             json.dump({"slug": slug, "license": lic, "source": url, "chapters": chapters}, open(ROOT/f"data/texts/{slug}.json", "w"))
         print(slug, lic, file=sys.stderr)
