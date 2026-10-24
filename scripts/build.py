@@ -101,6 +101,25 @@ for _w in WORKS:
         _w["license"] = "CC BY-NC-ND 4.0 (Mises Institute)"
         _w["_html"] = _TEXTS[_w["_path"]]
         _w["_lic_url"] = "https://creativecommons.org/licenses/by-nc-nd/4.0/"
+# Hosted books (EPUB text extracted by scripts/fetch_texts.py; only CC-licensed ones are written)
+BOOKMETA = {
+    "left-right-and-prospects-liberty": ("Left, Right, and the Prospects for Liberty", 1965, "Essay", "English"),
+    "economic-controversies": ("Economic Controversies", 2011, "Essay collection", "English"),
+    "betrayal-american-right": ("La traici\u00f3n de la derecha estadounidense (The Betrayal of the American Right)", 2007, "Book", "Spanish edition"),
+}
+BOOKS = {}
+for _f in sorted(glob.glob(str(ROOT / "data" / "texts" / "*.json"))):
+    _d = json.loads(open(_f).read())
+    if _d["slug"] not in BOOKMETA:
+        continue
+    _t, _y, _ty, _ln = BOOKMETA[_d["slug"]]
+    _n = re.sub(r"[^a-z0-9]+", " ", _t.lower()).strip()
+    WORKS[:] = [w for w in WORKS if re.sub(r"[^a-z0-9]+", " ", w["title"].lower()).strip() != _n]
+    _lu = "https://creativecommons.org/licenses/" + _d["license"].split()[1].lower() + "/" + _d["license"].split()[2] + "/"
+    WORKS.append({"slug": _d["slug"], "title": _t, "year": _y, "type": _ty, "publication": "", "license": _d["license"] + " (Mises Institute)",
+                  "hosting": "full", "source_url": "https://mises.org/library/book/" + _d["slug"].replace("betrayal-american-right", "betrayal-american-right"),
+                  "source_name": "Mises Institute", "_lic_url": _lu, "_book": _d["chapters"],
+                  "description": "Full text on this site (" + _ln + "), reproduced under its Creative Commons license."})
 TOPICS = json.loads((ROOT / "data" / "topics.json").read_text())
 WORKS.sort(key=lambda w: (w.get("year") or 9999, w["title"].lower()))
 
@@ -292,10 +311,15 @@ def main():
 
     # ---- work pages
     def reading(w, url):
+        if w.get("_book"):
+            toc = "".join(f'<li><a href="/works/{w["slug"]}/read/{i+1}/">{esc(c["title"] or "Part " + str(i+1))}</a></li>' for i, c in enumerate(w["_book"]))
+            return (f'<h2>Read on this site</h2><ol class="toc">{toc}</ol>' + attrib(w, url))
         if not w.get("_html"):
             return ""
-        return (f'<hr><div class="prose reading">{w["_html"]}</div>'
-                f'<p class="attrib"><b>Attribution.</b> &ldquo;{esc(w["title"])}&rdquo; by Murray N. Rothbard, originally published by the '
+        return (f'<hr><div class="prose reading">{w["_html"]}</div>' + attrib(w, url))
+
+    def attrib(w, url):
+        return (f'<p class="attrib"><b>Attribution.</b> &ldquo;{esc(w["title"])}&rdquo; by Murray N. Rothbard, originally published by the '
                 f'<a href="{esc(url)}" rel="noopener">{esc(w.get("source_name") or "Mises Institute")}</a>. '
                 f'Reproduced unaltered and non-commercially under the <a href="{esc(w["_lic_url"])}" rel="license noopener">{esc(w["license"])}</a> license.</p>')
 
@@ -322,6 +346,18 @@ def main():
 <p><a class="btn" href="{esc(url)}" rel="noopener">{esc(label)}</a></p>{reading(w, url)}</article>"""
         write(f"works/{w['slug']}/index.html",
               page(f"{w['title']} | Murray Rothbard", desc, body, f"/works/{w['slug']}/"))
+
+    for w in WORKS:
+        if not w.get("_book"):
+            continue
+        url, _ = source_link(w)
+        ch = w["_book"]
+        for i, c in enumerate(ch):
+            paras = "".join(f"<p>{esc(x.strip())}</p>" for x in re.split(r"\n\s*\n", c["text"]) if x.strip())
+            nav = (f'<a href="/works/{w["slug"]}/read/{i}/">&larr; Previous</a>' if i else "") + " " + (f'<a href="/works/{w["slug"]}/read/{i+2}/">Next &rarr;</a>' if i + 1 < len(ch) else "")
+            body = (f'<article><p class="meta"><a href="/works/{w["slug"]}/">&larr; {esc(w["title"])}</a></p><h1>{esc(c["title"] or w["title"])}</h1>'
+                    f'<div class="prose reading">{paras}</div><p class="meta">{nav}</p>{attrib(w, url)}</article>')
+            write(f"works/{w['slug']}/read/{i+1}/index.html", page(f"{c['title'] or w['title']} | {w['title']}", w["title"], body, f"/works/{w['slug']}/read/{i+1}/"))
 
     about = """<article><h1>About this index</h1><div class="prose">
 <p>Murray N. Rothbard wrote prolifically between 1949 and 1995. This site aims to be the most complete, easy-to-search list of that work, with each entry linked to a place it can be read.</p>
