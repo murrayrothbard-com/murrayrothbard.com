@@ -8,7 +8,7 @@ Lookup: search + year/type/topic filters on the home page (linkable via ?query),
 plus a static page per year, topic, type and publication under /browse/.
 Hosting policy: every record is "link" until its license is verified; see DESIGN.md.
 """
-import html
+import os, html
 import json
 import re
 import shutil
@@ -222,7 +222,12 @@ def source_link(w):
     return LISTING, "Find it in the Mises Institute collection"
 
 
+BASE = os.environ.get("BASE_PATH", "").rstrip("/")
+
+
 def write(rel, text):
+    if BASE and rel.endswith(".html"):
+        text = re.sub(r'(href|src|action)="/(?!/)', lambda m: f'{m.group(1)}="{BASE}/', text)
     p = OUT / rel
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(text)
