@@ -29,7 +29,15 @@ def slugify(s):
 WORKS = json.loads((ROOT / "data" / "works.json").read_text())
 _imp = ROOT / "data" / "imported.json"
 if _imp.exists():
-    WORKS += json.loads(_imp.read_text())
+    for _r in json.loads(_imp.read_text()):
+        _r.setdefault("source_url", None)
+        _r.setdefault("source_name", "Mises Institute")
+        _r.setdefault("license", "Check at source")
+        _r.setdefault("hosting", "link")
+        _r["publication"] = re.sub(r"\s+\d+, no\. \d+.*$", "", _r.get("publication", "")).strip()
+        if _r["type"] == "Other" and _r["publication"]:
+            _r["type"] = "Article"  # periodical pieces: columns, essays, op-eds
+        WORKS.append(_r)
 TOPICS = json.loads((ROOT / "data" / "topics.json").read_text())
 WORKS.sort(key=lambda w: (w.get("year") or 9999, w["title"].lower()))
 
@@ -162,6 +170,9 @@ def main():
         if w["_pub"]:
             pubs.setdefault(w["_pub"], (w["publication"], []))[1].append(w)
 
+    # publication pages only for clean periodical-style names that recur
+    pubs = {k: v for k, v in pubs.items() if len(v[1]) >= 3 and len(v[0]) <= 60 and not re.search(r"\bed\.|^in ", v[0])}
+
     # ---- home with filters
     ys = "".join(f'<option value="{y}">{y} ({len(years[y])})</option>' for y in sorted(years))
     ts = "".join(f'<option value="{k}">{esc(v[0])} ({len(v[1])})</option>' for k, v in sorted(types.items()))
@@ -221,7 +232,12 @@ def main():
         desc = w.get("description") or f"{w['title']} by Murray N. Rothbard."
         tchips = "".join(f'<li><a href="/browse/topic/{t}/">{esc(TOPICS[t]["label"])}</a></li>' for t in w["_topics"])
         year = (f'<a href="/browse/year/{w["year"]}/">{w["year"]}</a>' if w.get("year") else "Not dated")
-        pub = (f'<div class="fact"><b>Published in</b><a href="/browse/publication/{w["_pub"]}/">{esc(w["publication"])}</a></div>' if w["_pub"] else "")
+        if w["_pub"] in pubs:
+            pub = f'<div class="fact"><b>Published in</b><a href="/browse/publication/{w["_pub"]}/">{esc(w["publication"])}</a></div>'
+        elif w.get("publication") and len(w["publication"]) <= 90:
+            pub = f'<div class="fact"><b>Published in</b>{esc(w["publication"])}</div>'
+        else:
+            pub = ""
         body = f"""<article><p class="meta"><a href="/">&larr; All works</a></p>
 <h1>{esc(w['title'])}</h1>
 <p class="prose">{esc(desc)}</p>
@@ -238,6 +254,7 @@ def main():
     about = """<article><h1>About this index</h1><div class="prose">
 <p>Murray N. Rothbard wrote prolifically between 1949 and 1995. This site aims to be the most complete, easy-to-search list of that work, with each entry linked to a place it can be read.</p>
 <p>Rothbard's writings are not in the public domain, and their licenses vary: some are released under Creative Commons licenses, some allow only non-commercial reuse, and some are fully reserved. So this site lists and links first, and hosts full text only where the license clearly allows it.</p>
+<p>The catalog was compiled from published Rothbard bibliographies, including David Gordon's in <em>The Essential Rothbard</em>, and is still being checked and expanded.</p>
 <p>If you hold rights to a work listed here and want a change, please get in touch.</p></div></article>"""
     write("about/index.html", page("About | Murray Rothbard", "How this index of Rothbard's writings works.", about, "/about/", "about"))
     write("404.html", page("Not found | Murray Rothbard", "Page not found.",
