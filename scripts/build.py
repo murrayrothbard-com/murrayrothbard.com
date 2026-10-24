@@ -361,7 +361,7 @@ def main():
 
     about = """<article><h1>About this index</h1><div class="prose">
 <p>Murray N. Rothbard wrote prolifically between 1949 and 1995. This site aims to be the most complete, easy-to-search list of that work, with each entry linked to a place it can be read.</p>
-<p>Rothbard's writings are not in the public domain, and their licenses vary: some are released under Creative Commons licenses, some allow only non-commercial reuse, and some are fully reserved. So this site lists and links first, and hosts full text only where the license clearly allows it.</p>
+<p>Rothbard's writings are not in the public domain, and their licenses vary: some are released under Creative Commons licenses, some allow only non-commercial reuse, and some are fully reserved. So this site lists and links first, and hosts full text only where the license clearly allows it: currently Creative Commons&ndash;licensed works from the Mises Institute, reproduced unaltered, non-commercially and with attribution. Every entry links back to its original source.</p>
 <p>The catalog was compiled from published Rothbard bibliographies, including David Gordon's in <em>The Essential Rothbard</em>, and is still being checked and expanded.</p>
 <p>If you hold rights to a work listed here and want a change, please get in touch.</p></div></article>"""
     write("about/index.html", page("About | Murray Rothbard", "How this index of Rothbard's writings works.", about, "/about/", "about"))
