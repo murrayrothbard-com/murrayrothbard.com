@@ -1,0 +1,8 @@
+{
+  "money-banking": {"label": "Money and banking", "keywords": ["money", "monetary", "bank", "fed", "federal reserve", "gold", "dollar", "inflation", "credit", "panic", "depression", "currency"]},
+  "economic-theory": {"label": "Economic theory", "keywords": ["econom", "praxeolog", "price", "market", "value", "utility", "austrian", "mises", "human action", "treatise", "capital", "entrepreneur"]},
+  "liberty-ethics": {"label": "Liberty and ethics", "keywords": ["liberty", "libertarian", "ethic", "rights", "freedom", "natural law", "justice", "property", "anarch"]},
+  "state-politics": {"label": "The state and politics", "keywords": ["state", "government", "politic", "war", "peace", "empire", "democra", "tax", "conservative", "left and right"]},
+  "history": {"label": "History", "keywords": ["history", "historical", "colonial", "revolution", "panic", "depression", "century"]},
+  "biography-tributes": {"label": "People and tributes", "keywords": ["tribute", "memoriam", "biography", "obituary", "remembrance"]}
+}
