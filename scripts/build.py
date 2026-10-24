@@ -105,6 +105,13 @@ for _w in WORKS:
 BOOKMETA = {
     "left-right-and-prospects-liberty": ("Left, Right, and the Prospects for Liberty", 1965, "Essay", "English"),
     "economic-controversies": ("Economic Controversies", 2011, "Essay collection", "English"),
+    "anatomy-state": ("Anatomy of the State", 1974, "Book", "English"),
+    "strictly-confidential-private-volker-fund-memos-murray-n-rothbard": ("Strictly Confidential: The Private Volker Fund Memos of Murray N. Rothbard", 2010, "Book", "English"),
+    "wall-street-banks-and-american-foreign-policy": ("Wall Street, Banks, and American Foreign Policy", 2011, "Essay collection", "English"),
+    "progressive-era": ("The Progressive Era", 2017, "Book", "English"),
+    "rothbard-reader": ("The Rothbard Reader", 2016, "Essay collection", "English"),
+    "rothbard-z": ("Rothbard A to Z", 2018, "Book", "English"),
+    "what-has-government-done-our-money": ("What Has Government Done to Our Money?", 1963, "Book", "English"),
     "betrayal-american-right": ("La traici\u00f3n de la derecha estadounidense (The Betrayal of the American Right)", 2007, "Book", "Spanish edition"),
 }
 BOOKS = {}
