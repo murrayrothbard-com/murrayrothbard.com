@@ -26,7 +26,7 @@ def detect(txt):
     return "unknown"
 
 # Licenses verified by hand on each book's Mises page (EPUB front matter was not machine-readable)
-OVERRIDE = {"economic-controversies": "CC BY 3.0", "betrayal-american-right": "CC BY-NC-ND 4.0"}
+OVERRIDE = {}
 ONLY = os.environ.get("ONLY", "").split(",") if os.environ.get("ONLY") else None
 for slug, path in books.items():
     if ONLY and slug not in ONLY: continue
@@ -39,8 +39,14 @@ for slug, path in books.items():
         parts = [(n, strip(z.read(n).decode("utf8", "ignore"))) for n in names]
         front = " ".join(p[1] for p in parts[:6])
         raw_front = " ".join(z.read(n).decode("utf8", "ignore") for n in names[:6])
-        lic = OVERRIDE.get(slug) or detect(raw_front + " " + front)
-        report[slug] = {"license": lic, "bytes": len(data), "sections": len(parts)}
+        allraw = " ".join(z.read(n).decode("utf8", "ignore") for n in names)
+        edges = " ".join(z.read(n).decode("utf8", "ignore") for n in names[:4] + names[-3:])
+        mcc = re.search(r"creativecommons\.org/licenses/([a-z\-]+)/([0-9.]+)", allraw, re.I)
+        lic = OVERRIDE.get(slug) or (("CC " + mcc.group(1).upper() + " " + mcc.group(2)) if mcc else detect(edges))
+        flat = re.sub(r"\s+", " ", strip(allraw))
+        mm = re.search(r"(?i)(creativecommons\.org|creative commons|all rights reserved|public domain)", flat)
+        evidence = flat[max(0, mm.start()-100):mm.end()+160] if mm else ""
+        report[slug] = {"license": lic, "evidence": evidence, "bytes": len(data), "sections": len(parts)}
         if lic.startswith("CC BY"):
             chapters = [{"title": (re.search(r"[^\n]+", t.strip()) or [""])[0][:120] if t.strip() else "", "text": t.strip()} for _, t in parts if len(t.strip()) > 200]
             json.dump({"slug": slug, "license": lic, "source": url, "chapters": chapters}, open(ROOT/f"data/texts/{slug}.json", "w"))
