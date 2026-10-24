@@ -27,6 +27,9 @@ def slugify(s):
 
 
 WORKS = json.loads((ROOT / "data" / "works.json").read_text())
+_imp = ROOT / "data" / "imported.json"
+if _imp.exists():
+    WORKS += json.loads(_imp.read_text())
 TOPICS = json.loads((ROOT / "data" / "topics.json").read_text())
 WORKS.sort(key=lambda w: (w.get("year") or 9999, w["title"].lower()))
 
@@ -208,7 +211,7 @@ def main():
     browse = f"""<article><h1>Browse</h1><p class="prose">Find Rothbard's writings by topic, year, type, or where they were published.</p>
 <h2>By topic</h2>{chips('topic', [(k, TOPICS[k]['label'], len(topics[k])) for k in TOPICS if k in topics])}
 <h2>By type</h2>{chips('type', [(k, v[0], len(v[1])) for k, v in sorted(types.items())])}
-{('<h2>By publication</h2>' + chips('publication', [(k, v[0], len(v[1])) for k, v in sorted(pubs.items())])) if pubs else ''}
+{('<h2>By publication</h2>' + chips('publication', sorted([(k, v[0], len(v[1])) for k, v in pubs.items() if len(v[1]) >= 5], key=lambda x: -x[2]))) if pubs else ''}
 <h2>By year</h2>{year_html}</article>"""
     write("browse/index.html", page("Browse | Murray Rothbard", "Browse Murray Rothbard's writings by topic, year, type and publication.", browse, "/browse/", "browse"))
 
