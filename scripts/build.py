@@ -62,6 +62,30 @@ if _art.exists():
                 "source_url": _url, "source_name": "Mises Institute",
                 "description": "Posted on Mises.org " + _date + "."}
         WORKS.append(_rec); _by[_norm(_title)] = _rec
+# LewRockwell.com archive + Libertarian Forum (link-only)
+_lrc = ROOT / "data" / "lrc_articles.json"
+if _lrc.exists():
+    for _path, _title in json.loads(_lrc.read_text()):
+        _url = "https://www.lewrockwell.com" + _path
+        _m = _by.get(_norm(_title))
+        if _m:
+            if not _m.get("source_url"):
+                _m["source_url"] = _url
+                _m["source_name"] = "LewRockwell.com"
+            continue
+        _yr = _path.split("/")[1]
+        _rec = {"slug": slugify(_title)[:80] + "-lrc", "title": _title, "year": None, "type": "Article",
+                "publication": "LewRockwell.com", "license": "Check at source", "hosting": "link",
+                "source_url": _url, "source_name": "LewRockwell.com",
+                "description": "Archived at LewRockwell.com."}
+        WORKS.append(_rec); _by[_norm(_title)] = _rec
+for _t, _u, _y in [
+    ("The Libertarian Forum, Volume 1 (1969-1976)", "https://mises.org/libertarian-forum-1969-1984/complete-libertarian-forum-1969-1984", 1969),
+    ("The Libertarian Forum, Volume 2 (1977-1984)", "https://mises.org/libertarian-forum-1969-1984/complete-libertarian-forum-1969-1984", 1977)]:
+    WORKS.append({"slug": slugify(_t), "title": _t, "year": _y, "type": "Periodical", "publication": "The Libertarian Forum",
+                  "license": "All rights reserved (Mises Institute)", "hosting": "link", "source_url": _u,
+                  "source_name": "Mises Institute",
+                  "description": "Rothbard's newsletter, which he edited from 1969 to 1984."})
 TOPICS = json.loads((ROOT / "data" / "topics.json").read_text())
 WORKS.sort(key=lambda w: (w.get("year") or 9999, w["title"].lower()))
 
