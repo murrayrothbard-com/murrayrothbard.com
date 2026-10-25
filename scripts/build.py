@@ -127,6 +127,17 @@ for _f in sorted(glob.glob(str(ROOT / "data" / "texts" / "*.json"))):
                   "hosting": "full", "source_url": "https://mises.org/library/book/" + _d["slug"].replace("betrayal-american-right", "betrayal-american-right"),
                   "source_name": "Mises Institute", "_lic_url": _lu, "_book": _d["chapters"],
                   "description": "Full text on this site (" + _ln + "), reproduced under its Creative Commons license."})
+# Internet Archive copies (links only; an upload is not a license, so nothing is hosted from here)
+_ia = ROOT / "data" / "archive_links.json"
+if _ia.exists():
+    _nn = lambda t: re.sub(r"[^a-z0-9]+", " ", re.sub(r"^(the|a|an)\s+", "", re.split(r"[:;(]", t.lower())[0].strip())).strip()
+    _idx = {}
+    for _w in WORKS:
+        _idx.setdefault(_nn(_w["title"]), []).append(_w)
+    for _id, _t, _y in json.loads(_ia.read_text()):
+        for _w in _idx.get(_nn(_t), []):
+            if _w.get("type") in ("Book", "Essay collection", "Essay") and len(_nn(_t)) > 6:
+                _w.setdefault("_alt", []).append(("Internet Archive", "https://archive.org/details/" + _id))
 TOPICS = json.loads((ROOT / "data" / "topics.json").read_text())
 WORKS.sort(key=lambda w: (w.get("year") or 9999, w["title"].lower()))
 
@@ -322,6 +333,11 @@ def main():
     write("browse/index.html", page("Browse | Murray Rothbard", "Browse Murray Rothbard's writings by topic, year, type and publication.", browse, "/browse/", "browse"))
 
     # ---- work pages
+    def alt_links(w):
+        if not w.get("_alt"):
+            return ""
+        return '<p class="meta">Also available: ' + " &middot; ".join(f'<a href="{esc(u)}" rel="noopener">{esc(n)}</a>' for n, u in w["_alt"]) + "</p>"
+
     def reading(w, url):
         if w.get("_book"):
             toc = "".join(f'<li><a href="/works/{w["slug"]}/read/{i+1}/">{esc(c["title"] or "Part " + str(i+1))}</a></li>' for i, c in enumerate(w["_book"]))
@@ -355,7 +371,7 @@ def main():
 <div class="fact"><b>Type</b><a href="/browse/type/{w['_type']}/">{esc(w['type'])}</a></div>{pub}
 <div class="fact"><b>License</b>{esc(w.get('license', 'Check at source'))}</div>
 <div class="fact"><b>On this site</b>{'Full text' if w.get('hosting') == 'full' else 'Link to source'}</div></div>
-<p><a class="btn" href="{esc(url)}" rel="noopener">{esc(label)}</a></p>{reading(w, url)}</article>"""
+<p><a class="btn" href="{esc(url)}" rel="noopener">{esc(label)}</a></p>{alt_links(w)}{reading(w, url)}</article>"""
         write(f"works/{w['slug']}/index.html",
               page(f"{w['title']} | Murray Rothbard", desc, body, f"/works/{w['slug']}/"))
 
