@@ -449,8 +449,12 @@ def main():
           ("MNR2.jpg", "MNR2.jpg", "Murray Rothbard", "Ludwig von Mises Institute", "CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/", ""),
           ("Rothbard at podium color.jpg", "Rothbard at podium color.jpg", "Rothbard speaking at a podium", "Ludwig von Mises Institute", "CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/", ""),
           ("Rothbard 56 Sennholz dinner.jpg", "Rothbard 56 Sennholz dinner.jpg", "Rothbard at a dinner with Hans Sennholz, 1956", "Ludwig von Mises Institute", "CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/", "1956"),
-          ("1983 libertarian presidential convention in NYC.jpg", "1983 libertarian presidential convention in NYC.jpg", "At the 1983 Libertarian presidential convention, New York", "Ludwig von Mises Institute", "CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/", "5 Sept 1983")]
+          ("1983 libertarian presidential convention in NYC.jpg", "1983 libertarian presidential convention in NYC.jpg", "At the 1983 Libertarian presidential convention, New York", "Ludwig von Mises Institute", "CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/", "5 Sept 1983"),
+          ("Murray Rothbard Portrait.jpg", "Murray Rothbard Portrait.jpg", "Portrait of Murray Rothbard", "Ludwig von Mises Institute", "CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/", ""),
+          ("M&J 2.jpg", "M&J 2.jpg", "Murray and Joey Rothbard", "Ludwig von Mises Institute", "CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/", ""),
+          ("Murray&Joey.jpg", "Murray&Joey.jpg", "Murray and Joey Rothbard", "Ludwig von Mises Institute", "CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/", "")]
     small = json.loads((ROOT / "data/photos/small.json").read_text())
+    small.update(json.loads((ROOT / "data/photos/more.json").read_text()))
     bigb = "".join(re.sub(r"\s", "", Path(f).read_text()) for f in sorted(glob.glob(str(ROOT / "data/photos/big.b64.*"))))
     (OUT / "img").mkdir(exist_ok=True)
     figs, k = [], 0
@@ -465,7 +469,7 @@ def main():
                     f'via <a href="{cu}">Wikimedia Commons</a>.</figcaption></figure></li>')
     write("photos/index.html", page("Photos of Murray Rothbard", "Freely licensed photographs of Murray N. Rothbard.",
           '<article><h1>Photos</h1><p class="prose">Freely licensed photographs from Wikimedia Commons. Click an image for the full file. '
-          'The first is high resolution (2373&times;2991); the others are web-size originals.</p>'
+          'The first is high resolution (2373&times;2991); the rest are the largest free versions available, at web size.</p>'
           f'<ul class="gal">{"".join(figs)}</ul></article>', "/photos/", "photos"))
 
     about = """<article><h1>About this index</h1>
