@@ -8,7 +8,7 @@ Lookup: search + year/type/topic filters on the home page (linkable via ?query),
 plus a static page per year, topic, type and publication under /browse/.
 Hosting policy: every record is "link" until its license is verified; see DESIGN.md.
 """
-import os, html
+import os, urllib.parse, html
 import json
 import re
 import shutil
@@ -158,6 +158,13 @@ if _ia.exists():
         for _w in _idx.get(_nn(_t), []):
             if _w.get("type") in ("Book", "Essay collection", "Essay") and len(_nn(_t)) > 6:
                 _w.setdefault("_alt", []).append(("Internet Archive", "https://archive.org/details/" + _id))
+_xl = ROOT / "data" / "extra_links.json"
+if _xl.exists():
+    _X = json.loads(_xl.read_text())
+    for _w in WORKS:
+        if not _w.get("source_url") and _w["slug"] in _X:
+            _w["source_url"] = _X[_w["slug"]]
+            _w["source_name"] = "Mises Institute"
 TOPICS = json.loads((ROOT / "data" / "topics.json").read_text())
 WORKS.sort(key=lambda w: (w.get("year") or 9999, w["title"].lower()))
 
@@ -257,7 +264,7 @@ Texts remain the property of their rights holders and are linked at their source
 def source_link(w):
     if w.get("source_url"):
         return w["source_url"], f"Read at {w.get('source_name') or 'source'}"
-    return LISTING, "Find it in the Mises Institute collection"
+    return "https://mises.org/search?articles_prod%5Bquery%5D=" + urllib.parse.quote(w["title"][:120]), "Search for it at Mises.org"
 
 
 BASE = os.environ.get("BASE_PATH", "").rstrip("/")
@@ -353,7 +360,18 @@ def main():
     write("browse/index.html", page("Browse | Murray Rothbard", "Browse Murray Rothbard's writings by topic, year, type and publication.", browse, "/browse/", "browse"))
 
     # ---- work pages
+    PERIODICAL = {"The Free Market": "https://mises.org/library/periodical/free-market",
+                  "The Libertarian Forum": "https://mises.org/library/periodical/libertarian-forum-1969-1984"}
+
     def alt_links(w):
+        if not w.get("source_url"):
+            q = urllib.parse.quote(w["title"][:120])
+            opts = [("Internet Archive full-text search", "https://archive.org/search?query=%22" + q + "%22&sin=TXT"),
+                    ("LewRockwell.com", "https://www.lewrockwell.com/?s=" + q)]
+            if w.get("publication") in PERIODICAL:
+                opts.insert(0, (w["publication"] + " archive", PERIODICAL[w["publication"]]))
+            return ('<p class="meta">No online copy found yet. Other places to look: ' +
+                    " &middot; ".join(f'<a href="{esc(u)}" rel="noopener">{esc(n)}</a>' for n, u in opts) + "</p>")
         if not w.get("_alt"):
             return ""
         return '<p class="meta">Also available: ' + " &middot; ".join(f'<a href="{esc(u)}" rel="noopener">{esc(n)}</a>' for n, u in w["_alt"]) + "</p>"
@@ -396,7 +414,7 @@ def main():
 <div class="fact"><b>Year</b>{year}</div>
 <div class="fact"><b>Type</b><a href="/browse/type/{w['_type']}/">{esc(w['type'])}</a></div>{pub}
 <div class="fact"><b>License</b>{esc(w.get('license', 'Check at source'))}</div>
-<div class="fact"><b>On this site</b>{'Full text' if w.get('hosting') == 'full' else 'Link to source'}</div></div>
+<div class="fact"><b>On this site</b>{'Full text' if w.get('hosting') == 'full' else ('Link to source' if w.get('source_url') else 'Listed (no online copy found yet)')}</div></div>
 <p><a class="btn" href="{esc(url)}" rel="noopener">{esc(label)}</a></p>{alt_links(w)}{reading(w, url)}</article>"""
         write(f"works/{w['slug']}/index.html",
               page(f"{w['title']} | Murray Rothbard", desc, body, f"/works/{w['slug']}/"))
