@@ -165,6 +165,13 @@ if _xl.exists():
         if not _w.get("source_url") and _w["slug"] in _X:
             _w["source_url"] = _X[_w["slug"]]
             _w["source_name"] = "Mises Institute"
+_fm = ROOT / "data" / "free_market_links.json"
+if _fm.exists():  # only for pieces the bibliography places in The Free Market (avoids same-title collisions)
+    _F = json.loads(_fm.read_text())
+    for _w in WORKS:
+        if not _w.get("source_url") and _w["slug"] in _F and "free market" in (_w.get("publication") or "").lower():
+            _w["source_url"] = _F[_w["slug"]]
+            _w["source_name"] = "Mises Institute"
 TOPICS = json.loads((ROOT / "data" / "topics.json").read_text())
 WORKS.sort(key=lambda w: (w.get("year") or 9999, w["title"].lower()))
 
