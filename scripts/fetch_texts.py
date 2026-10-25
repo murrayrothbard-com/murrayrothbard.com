@@ -47,7 +47,11 @@ for slug, path in books.items():
         mm = re.search(r"(?i)(creativecommons\.org|creative commons|all rights reserved|public domain)", flat)
         evidence = flat[max(0, mm.start()-100):mm.end()+160] if mm else ""
         report[slug] = {"license": lic, "evidence": evidence, "bytes": len(data), "sections": len(parts)}
-        if lic.startswith("CC BY"):
+        PD = {"panic-1819-reactions-and-policies", "americas-great-depression", "man-economy-and-state-power-and-market"}
+        if slug in PD:
+            chapters = [{"title": (re.search(r"[^\n]+", t.strip()) or [""])[0][:120] if t.strip() else "", "text": t.strip()} for _, t in parts if len(t.strip()) > 200]
+            json.dump({"slug": slug, "license": "Public domain (US)", "source": url, "chapters": chapters}, open(ROOT/f"data/texts/{slug}.json", "w"))
+        elif lic.startswith("CC BY"):
             chapters = [{"title": (re.search(r"[^\n]+", t.strip()) or [""])[0][:120] if t.strip() else "", "text": t.strip()} for _, t in parts if len(t.strip()) > 200]
             json.dump({"slug": slug, "license": lic, "source": url, "chapters": chapters}, open(ROOT/f"data/texts/{slug}.json", "w"))
         print(slug, lic, file=sys.stderr)
