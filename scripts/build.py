@@ -194,6 +194,10 @@ html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
 [hidden]{display:none!important}
 a{color:var(--acc)}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;margin:24px 0;padding:0;list-style:none}
+.gal figure{margin:0}.gal img,.port img{width:100%;height:auto;border-radius:10px;display:block;background:var(--bg2)}
+.gal figcaption,.port figcaption{font-size:13px;color:var(--mute);margin-top:8px;line-height:1.45}
+.port{margin:24px 0}
 .wrap{max-width:880px;margin:0 auto;padding:0 20px}
 header.top{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:5}
 header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
@@ -250,7 +254,7 @@ $('#reset').addEventListener('click',()=>{q.value=fy.value=ft.value=fo.value='';
 def page(title, desc, body, path, current=""):
     nav = "".join(
         f'<a href="{h}"{" aria-current=page" if k == current else ""}>{l}</a>'
-        for k, h, l in (("works", "/", "Works"), ("browse", "/browse/", "Browse"), ("about", "/about/", "About"))
+        for k, h, l in (("works", "/", "Works"), ("browse", "/browse/", "Browse"), ("photos", "/photos/", "Photos"), ("about", "/about/", "About"))
     )
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
@@ -438,7 +442,34 @@ def main():
                     f'<div class="prose reading">{paras}</div><p class="meta">{nav}</p>{attrib(w, url)}</article>')
             write(f"works/{w['slug']}/read/{i+1}/index.html", page(f"{c['title'] or w['title']} | {w['title']}", w["title"], body, f"/works/{w['slug']}/read/{i+1}/"))
 
-    about = """<article><h1>About this index</h1><div class="prose">
+
+    # ---- photos (free-licensed, Wikimedia Commons)
+    PH = [("big", "Murray Rothbard.jpg", "Murray N. Rothbard", "Mises Institute", "CC BY-SA 3.0", "https://creativecommons.org/licenses/by-sa/3.0/", "Undated"),
+          ("Rothbard '70s.jpg", "Rothbard '70s.jpg", "Rothbard in the 1970s", "Ludwig von Mises Institute", "CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/", "1970s"),
+          ("MNR2.jpg", "MNR2.jpg", "Murray Rothbard", "Ludwig von Mises Institute", "CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/", ""),
+          ("Rothbard at podium color.jpg", "Rothbard at podium color.jpg", "Rothbard speaking at a podium", "Ludwig von Mises Institute", "CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/", ""),
+          ("Rothbard 56 Sennholz dinner.jpg", "Rothbard 56 Sennholz dinner.jpg", "Rothbard at a dinner with Hans Sennholz, 1956", "Ludwig von Mises Institute", "CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/", "1956"),
+          ("1983 libertarian presidential convention in NYC.jpg", "1983 libertarian presidential convention in NYC.jpg", "At the 1983 Libertarian presidential convention, New York", "Ludwig von Mises Institute", "CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/", "5 Sept 1983")]
+    small = json.loads((ROOT / "data/photos/small.json").read_text())
+    bigb = "".join(re.sub(r"\s", "", Path(f).read_text()) for f in sorted(glob.glob(str(ROOT / "data/photos/big.b64.*"))))
+    (OUT / "img").mkdir(exist_ok=True)
+    figs, k = [], 0
+    for key, cname, cap, auth, lic, licu, date in PH:
+        k += 1
+        raw = base64.b64decode(bigb) if key == "big" else base64.b64decode(small[key])
+        fn = f"rothbard-{k}.jpg"
+        (OUT / "img" / fn).write_bytes(raw)
+        cu = "https://commons.wikimedia.org/wiki/File:" + urllib.parse.quote(cname.replace(" ", "_"))
+        figs.append(f'<li><figure><a href="/img/{fn}"><img src="/img/{fn}" alt="{esc(cap)}" loading="lazy"></a>'
+                    f'<figcaption>{esc(cap)}{(", " + date) if date else ""}. Photo: {esc(auth)}, <a href="{licu}">{lic}</a>, '
+                    f'via <a href="{cu}">Wikimedia Commons</a>.</figcaption></figure></li>')
+    write("photos/index.html", page("Photos of Murray Rothbard", "Freely licensed photographs of Murray N. Rothbard.",
+          '<article><h1>Photos</h1><p class="prose">Freely licensed photographs from Wikimedia Commons. Click an image for the full file. '
+          'The first is high resolution (2373&times;2991); the others are web-size originals.</p>'
+          f'<ul class="gal">{"".join(figs)}</ul></article>', "/photos/", "photos"))
+
+    about = """<article><h1>About this index</h1>
+<figure class="port" style="max-width:280px"><img src="/img/rothbard-1.jpg" alt="Murray N. Rothbard" loading="lazy"><figcaption>Photo: Mises Institute, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, via <a href="https://commons.wikimedia.org/wiki/File:Murray_Rothbard.jpg">Wikimedia Commons</a>. <a href="/photos/">More photos</a>.</figcaption></figure><div class="prose">
 <p>Murray N. Rothbard wrote prolifically between 1949 and 1995. This site aims to be the most complete, easy-to-search list of that work, with each entry linked to a place it can be read.</p>
 <p>Rothbard's writings are not in the public domain, and their licenses vary: some are released under Creative Commons licenses, some allow only non-commercial reuse, and some are fully reserved. So this site lists and links first, and hosts full text only where the license clearly allows it: currently Creative Commons&ndash;licensed works from the Mises Institute, reproduced unaltered, non-commercially and with attribution. Every entry links back to its original source.</p>
 <p>The catalog was compiled from published Rothbard bibliographies, including David Gordon's in <em>The Essential Rothbard</em>, and is still being checked and expanded.</p>
@@ -447,7 +478,7 @@ def main():
     write("404.html", page("Not found | Murray Rothbard", "Page not found.",
           '<article><h1>Not found.</h1><p class="prose"><a href="/">Back to all works</a></p></article>', "/404.html"))
 
-    urls = ["/", "/browse/", "/about/"] + facet_urls + [f"/works/{w['slug']}/" for w in WORKS]
+    urls = ["/", "/browse/", "/about/", "/photos/"] + facet_urls + [f"/works/{w['slug']}/" for w in WORKS]
     write("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
           + "".join(f"<url><loc>{SITE}{u}</loc></url>\n" for u in urls) + "</urlset>\n")
     write("robots.txt", f"User-agent: *\nAllow: /\nSitemap: {SITE}/sitemap.xml\n")
