@@ -112,7 +112,22 @@ BOOKMETA = {
     "rothbard-reader": ("The Rothbard Reader", 2016, "Essay collection", "English"),
     "rothbard-z": ("Rothbard A to Z", 2018, "Book", "English"),
     "what-has-government-done-our-money": ("What Has Government Done to Our Money?", 1963, "Book", "English"),
+    "panic-1819-reactions-and-policies": ("The Panic of 1819: Reactions and Policies", 1962, "Book", "English"),
+    "americas-great-depression": ("America's Great Depression", 1963, "Book", "English"),
     "betrayal-american-right": ("La traici\u00f3n de la derecha estadounidense (The Betrayal of the American Right)", 2007, "Book", "Spanish edition"),
+}
+PDSEL = {  # public-domain (no renewal found): original text only, in reading order
+    "panic-1819-reactions-and-policies": [(14, "Preface"), (3, "I. The Panic and Its Genesis: Fluctuations in American Business, 1815\u201321"),
+        (4, "II. Direct Relief of Debtors"), (5, "III. State Proposals and Actions for Monetary Expansion"), (6, "IV. Proposals for National Monetary Expansion"),
+        (7, "V. Restricting Bank Credit: Proposals and Actions"), (8, "VI. The Movement for a Protective Tariff"), (9, "VII. Conclusion"),
+        (0, "Appendix A: Minor Remedies Proposed"), (1, "Appendix B: Chronology of Relief Legislation"), (2, "Bibliography")],
+    "americas-great-depression": [(2, "Introduction to the First Edition"), (3, "1 The Positive Theory of the Cycle"),
+        (4, "2 Keynesian Criticisms of the Theory"), (5, "3 Some Alternative Explanations of Depression: A Critique"),
+        (6, "4 The Inflationary Factors"), (7, "5 The Development of the Inflation"),
+        (9, "6 Theory and Inflation: Economists and the Lure of a Stable Price Level"),
+        (10, "7 Prelude to Depression: Mr. Hoover and Laissez-Faire"), (11, "8 The Depression Begins: President Hoover Takes Command"),
+        (12, "9 1930"), (13, "10 1931: The Tragic Year"), (14, "11 The Hoover New Deal of 1932"), (15, "12 The Close of the Hoover Term"),
+        (16, "Appendix: Government and the National Product, 1929\u20131932"), (17, "Notes")],
 }
 BOOKS = {}
 for _f in sorted(glob.glob(str(ROOT / "data" / "texts" / "*.json"))):
@@ -122,8 +137,13 @@ for _f in sorted(glob.glob(str(ROOT / "data" / "texts" / "*.json"))):
     _t, _y, _ty, _ln = BOOKMETA[_d["slug"]]
     _n = re.sub(r"[^a-z0-9]+", " ", _t.lower()).strip()
     WORKS[:] = [w for w in WORKS if re.sub(r"[^a-z0-9]+", " ", w["title"].lower()).strip() != _n]
-    _lu = "https://creativecommons.org/licenses/" + _d["license"].split()[1].lower() + "/" + _d["license"].split()[2] + "/"
-    WORKS.append({"slug": _d["slug"], "title": _t, "year": _y, "type": _ty, "publication": "", "license": _d["license"] + " (Mises Institute)",
+    if _d["slug"] in PDSEL:
+        _d["chapters"] = [{"title": _tt, "text": _d["chapters"][_i]["text"]} for _i, _tt in PDSEL[_d["slug"]]]
+        _lu = "https://exhibits.stanford.edu/copyrightrenewals"
+        _d["license"] = "Public domain (US)"
+    else:
+        _lu = "https://creativecommons.org/licenses/" + _d["license"].split()[1].lower() + "/" + _d["license"].split()[2] + "/"
+    WORKS.append({"slug": _d["slug"], "title": _t, "year": _y, "type": _ty, "publication": "", "license": _d["license"] if _d["slug"] in PDSEL else _d["license"] + " (Mises Institute)",
                   "hosting": "full", "source_url": "https://mises.org/library/book/" + _d["slug"].replace("betrayal-american-right", "betrayal-american-right"),
                   "source_name": "Mises Institute", "_lic_url": _lu, "_book": _d["chapters"],
                   "description": "Full text on this site (" + _ln + "), reproduced under its Creative Commons license."})
@@ -347,6 +367,12 @@ def main():
         return (f'<hr><div class="prose reading">{w["_html"]}</div>' + attrib(w, url))
 
     def attrib(w, url):
+        if w["license"].startswith("Public domain"):
+            return (f'<p class="attrib"><b>Source and status.</b> &ldquo;{esc(w["title"])}&rdquo; by Murray N. Rothbard, from the '
+                    f'<a href="{esc(url)}" rel="noopener">Mises Institute edition</a>, reproduced here without its later forewords, indexes and front matter. '
+                    f'Published in the United States before 1964, the work appears to be in the public domain because no copyright renewal for it appears in the '
+                    f'<a href="{esc(w["_lic_url"])}" rel="noopener">Stanford Copyright Renewal Database</a> (checked October 2026). '
+                    f'Any text added in later editions may remain protected. This is not legal advice.</p>')
         return (f'<p class="attrib"><b>Attribution.</b> &ldquo;{esc(w["title"])}&rdquo; by Murray N. Rothbard, originally published by the '
                 f'<a href="{esc(url)}" rel="noopener">{esc(w.get("source_name") or "Mises Institute")}</a>. '
                 f'Reproduced unaltered and non-commercially under the <a href="{esc(w["_lic_url"])}" rel="license noopener">{esc(w["license"])}</a> license.</p>')
